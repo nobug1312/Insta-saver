@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Insta Saver - Mockup</title>
+<title>IGSave - Legacy Mockup</title>
 <style>
   :root { --bg: #09090B; --surface: #111215; --ink: #0B1723; --fg: #ECEEF2; --dim: #A0A6B0; --line: rgba(255,255,255,.1); --cyan: #7FB7E8; --green: #5DD6A0; --red: #F07882; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -67,7 +67,7 @@
 <figure data-screen="login"><figcaption>Private content</figcaption></figure>
 
 <script>
-const head = (user) => `<header><h1><span>~/</span><b>insta-saver</b></h1>${user ? `<span class="user">@${user}</span>` : '<span class="link">[ login ]</span>'}</header>`;
+const head = (user) => `<header><h1><span>~/</span><b>IGSave</b></h1>${user ? `<span class="user">@${user}</span>` : '<span class="link">[ login ]</span>'}</header>`;
 const prompt = (v) => `<div class="prompt"><span class="ps">$</span><span class="val ${v ? 'v' : ''}">${v || 'paste an instagram link'}</span><span class="paste">Paste</span></div>`;
 const tiles = (n, off = []) => Array.from({ length: n }, (_, i) =>
   `<div class="tile ${off.includes(i) ? 'off' : ''}"><div class="img p${i + 1}"></div><small></small></div>`).join('');
