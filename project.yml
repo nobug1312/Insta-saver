@@ -1,0 +1,17 @@
+name: InstaSaver
+options:
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  InstaSaver:
+    type: application
+    platform: iOS
+    sources: [InstaSaver]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.local.instasaver
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save downloaded photos and videos to your library.
+        TARGETED_DEVICE_FAMILY: "1"

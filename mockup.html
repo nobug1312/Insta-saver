@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insta Saver - Mockup</title>
+<style>
+  :root { --bg: #09090B; --surface: #111215; --ink: #0B1723; --fg: #ECEEF2; --dim: #A0A6B0; --line: rgba(255,255,255,.1); --cyan: #7FB7E8; --green: #5DD6A0; --red: #F07882; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #050507; display: flex; flex-wrap: wrap; gap: 48px; justify-content: center; padding: 40px 24px;
+         font: 15px/1.5 "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; color: var(--fg); }
+  figure { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  figcaption { font-size: 12px; color: #6B7A8A; }
+  .controls { width: 100%; text-align: center; font-size: 12px; color: #6B7A8A; }
+
+  .phone { width: 375px; height: 780px; border-radius: 46px; background: var(--bg); position: relative; overflow: hidden;
+           box-shadow: 0 0 0 9px #111216, 0 0 0 10px #26262C; }
+  .status { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 6px 30px 0; font-size: 14px; font-weight: 600; }
+  .status i { width: 110px; height: 30px; background: #000; border-radius: 16px; }
+  .content { padding: 12px 20px 120px; display: flex; flex-direction: column; gap: 22px; height: calc(100% - 50px); overflow: auto; scrollbar-width: none; }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; }
+  h1 { font-size: 20px; font-weight: 700; } h1 span { color: var(--dim); } h1 b { color: var(--cyan); }
+  .link { color: var(--cyan); font-size: 15px; cursor: pointer; }
+  .user { color: var(--green); font-size: 15px; cursor: pointer; }
+
+  .prompt { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); min-height: 50px; }
+  .prompt .ps { color: var(--green); font-weight: 700; }
+  .prompt .val { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--dim); }
+  .prompt .val.v { color: var(--fg); }
+  .paste { padding: 7px 12px; border-radius: 10px; background: rgba(127,183,232,.16); color: var(--cyan); font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  .err { color: var(--red); font-size: 15px; } .ok { color: var(--green); font-size: 15px; } .dim { color: var(--dim); }
+  .stack { display: flex; flex-direction: column; gap: 8px; }
+  .guide { font-size: 15px; display: flex; flex-direction: column; gap: 8px; }
+
+  .cursor { display: inline-block; color: var(--cyan); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--dim); margin-bottom: 14px; }
+  .meta a { color: var(--cyan); cursor: pointer; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
+  .tile { cursor: pointer; }
+  .tile .img { aspect-ratio: 1; border-radius: 10px; border: 2px solid var(--cyan); }
+  .tile.off .img { border: 1px solid var(--line); opacity: .55; }
+  .tile small { display: block; margin-top: 6px; font-size: 12px; color: var(--fg); }
+  .tile.off small { color: var(--dim); }
+  .p1 { background: linear-gradient(160deg, #6E8FB0, #2B3E57); } .p2 { background: linear-gradient(160deg, #3D5A73, #121D2B); }
+  .p3 { background: linear-gradient(160deg, #A8C3D6, #50708A); } .p4 { background: linear-gradient(160deg, #5C6F91, #1E2638); }
+  .p5 { background: linear-gradient(160deg, #2F4C66, #0D1520); } .p6 { background: linear-gradient(160deg, #8BA6BD, #3B5168); }
+
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 20px 34px; background: rgba(9,9,11,.96); border-top: 1px solid var(--line); }
+  .save { border-radius: 12px; padding: 14px; text-align: center; font-weight: 600; background: var(--cyan); color: var(--ink); cursor: pointer; }
+  .save.dis { background: var(--line); color: var(--dim); cursor: default; }
+
+  .reduce .cursor { animation: none; }
+</style>
+</head>
+<body>
+
+<p class="controls"><label><input type="checkbox" id="rm"> Simulate Reduce Motion</label> · tap tiles to toggle, tap save to run it</p>
+
+<figure data-screen="empty"><figcaption>Empty state</figcaption></figure>
+<figure data-screen="loading"><figcaption>Fetching</figcaption></figure>
+<figure data-screen="results"><figcaption>Result (interactive)</figcaption></figure>
+<figure data-screen="saving"><figcaption>Saving with progress</figcaption></figure>
+<figure data-screen="login"><figcaption>Private content</figcaption></figure>
+
+<script>
+const head = (user) => `<header><h1><span>~/</span><b>insta-saver</b></h1>${user ? `<span class="user">@${user}</span>` : '<span class="link">[ login ]</span>'}</header>`;
+const prompt = (v) => `<div class="prompt"><span class="ps">$</span><span class="val ${v ? 'v' : ''}">${v || 'paste an instagram link'}</span><span class="paste">Paste</span></div>`;
+const tiles = (n, off = []) => Array.from({ length: n }, (_, i) =>
+  `<div class="tile ${off.includes(i) ? 'off' : ''}"><div class="img p${i + 1}"></div><small></small></div>`).join('');
+const meta = (user, kind, n, all) => `<div class="meta"><span>@${user}  ${kind}  ${n} items</span><a>${all ? '[ none ]' : '[ all ]'}</a></div>`;
+
+const screens = {
+  empty: { html: head() + prompt('') + `<div class="guide"><span class="dim"># how it works</span><span>1. in Instagram tap ••• or Share</span><span>2. choose "Copy link"</span><span>3. come back here and tap Paste</span><br><span class="dim"># private accounts and stories need login</span></div>` },
+  loading: { html: head('linh.tran') + prompt('instagram.com/p/C9xK2mLrQ4a/') + `<div>fetching <span class="cursor">█</span></div>` },
+  results: { html: head('linh.tran') + prompt('instagram.com/p/C9xK2mLrQ4a/') + `<div>${meta('minh.anh', 'post', 6, false)}<div class="grid">${tiles(6, [3])}</div></div>`, bar: 'idle' },
+  saving: { html: head('linh.tran') + prompt('instagram.com/reel/C8pQ1vXoZ2b/') + `<div>${meta('studio.north', 'reel', 3, true)}<div class="grid">${tiles(3)}</div></div>`, bar: 'busy' },
+  login: { html: head() + prompt('instagram.com/stories/minh.anh/3412…') + `<div class="stack"><span class="err">error: this content is private. Log in to download it.</span><span class="link">$ login</span></div>` },
+};
+
+document.querySelectorAll('figure').forEach((fig) => {
+  const s = screens[fig.dataset.screen];
+  const phone = document.createElement('div');
+  phone.className = 'phone';
+  phone.innerHTML = `<div class="status">9:41<i></i>100%</div><div class="content">${s.html}</div>`;
+  if (s.bar) phone.insertAdjacentHTML('beforeend', '<div class="bar"><div class="save"></div></div>');
+  fig.prepend(phone);
+  wire(phone, s.bar);
+});
+document.getElementById('rm').addEventListener('change', (e) => document.body.classList.toggle('reduce', e.target.checked));
+
+function wire(phone, bar) {
+  const grid = phone.querySelector('.grid'), save = phone.querySelector('.save');
+  if (!save) return;
+  const tilesEl = [...grid.children];
+  const sel = () => grid.querySelectorAll('.tile:not(.off)').length;
+  const plural = (n) => `${n} ${n === 1 ? 'item' : 'items'}`;
+  const labels = () => tilesEl.forEach((t, i) => {
+    t.querySelector('small').textContent = `${t.classList.contains('off') ? '[ ]' : '[x]'} ${String(i + 1).padStart(2, '0')}.${i % 3 === 1 ? 'mp4' : 'jpg'}`;
+  });
+  const idle = () => {
+    const n = sel();
+    labels();
+    phone.querySelector('.meta a').textContent = n === tilesEl.length ? '[ none ]' : '[ all ]';
+    save.textContent = n ? `$ save ${plural(n)}` : '$ select items';
+    save.className = `save ${n ? '' : 'dis'}`;
+  };
+  const run = (stopAt) => {
+    const n = sel(); let done = 0;
+    save.className = 'save dis'; save.dataset.busy = 1;
+    const tick = () => {
+      const f = Math.floor((done * 12) / n);
+      save.textContent = `saving [${'#'.repeat(f)}${'-'.repeat(12 - f)}] ${done}/${n}`;
+      if (done === stopAt) return;
+      if (done++ < n) return setTimeout(tick, 450);
+      delete save.dataset.busy; idle();
+      const stack = phone.querySelector('.prompt').parentElement;
+      let m = phone.querySelector('.okmsg');
+      if (!m) { m = document.createElement('div'); m.className = 'ok okmsg'; phone.querySelector('.content').children[1].after(m); }
+      m.textContent = `ok: saved ${plural(n)} to Photos`;
+    };
+    tick();
+  };
+  grid.addEventListener('click', (e) => { if (!save.dataset.busy) { e.target.closest('.tile')?.classList.toggle('off'); idle(); } });
+  phone.querySelector('.meta a').addEventListener('click', () => {
+    const all = !grid.querySelector('.tile.off');
+    tilesEl.forEach((t) => t.classList.toggle('off', all)); idle();
+  });
+  save.addEventListener('click', () => { if (!save.classList.contains('dis')) run(); });
+  bar === 'busy' ? run(2) : idle();
+}
+</script>
+</body>
+</html>
